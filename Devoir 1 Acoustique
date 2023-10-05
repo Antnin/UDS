@@ -1,5 +1,7 @@
 %Données
-c=785.2; % la vitesse du fluide en m/s
+Vx = 392.1
+Vy = 680.3
+c = 785.2
 t=0.001; % 1 milliseconde en s
 f=100; % la fréquence en Hz
 
@@ -16,8 +18,8 @@ angley_deg = 90 - anglex_deg;
 angley_rad = deg2rad(angley_deg);
 
 % Coordonnées du point de passage
-x0 = c*t*cos(anglex_rad);
-y0 = c*t*sin(anglex_rad);
+x0 = Vx*t*sin(anglex_rad);
+y0 = Vy*t*cos(anglex_rad);
 
 %Tracé de la droite du front d'onde
 
@@ -38,23 +40,25 @@ plot(x, y, 'b', 'LineWidth', 2, 'DisplayName', "Front D'onde"); hold on;
 
 % Tracé du micro de ref
 plot(0, 0, 'go', 'MarkerSize', 8, 'MarkerFaceColor', 'black', 'DisplayName', "Micro référence");
+plot(1, 0, 'go', 'MarkerSize', 8, 'MarkerFaceColor', 'blue', 'DisplayName', "2ème micro");
+plot(0, 1, 'go', 'MarkerSize', 8, 'MarkerFaceColor', 'red', 'DisplayName', "3ème micro");
 
 
-%Tracé de k
+% k
 % Calcul des coordonnées finales du vecteur k (dépend de f)
 x_k = 2*pi*f/c*cos(anglex_rad);
 y_k = 2*pi*f/c*sin(anglex_rad);
 
-% Tracé du vecteur k
+% k
 hold on;
 quiver(x0, y0, x_k, y_k, 'Color', 'red', 'LineWidth', 2, 'DisplayName', 'k');
 hold on;
 
-%Tracé de n
+%Normale au front d'onde
 nx=0.867;
 ny=0.5;
-x02=x0-0.03;% Pour que les vecteurs ne soient pas superposés sur le graphique
-y02=y0+0.03;
+x02 = x0-0.03;% Pour que les vecteurs ne soient pas superposés sur le graphique
+y02 = y0+0.03;
 
 % Norme du vecteur
 normen = sqrt(nx^2+ny^2);
@@ -71,7 +75,7 @@ quiver(x02, y02, x_n, y_n, 'Color', 'green', 'LineWidth', 2,'DisplayName', 'n');
 %Graphique
 legend()
 axis equal;
-axis([0, 3, 0, 3]);
+axis([0, 2, 0, 2]);
 xlabel('x');
 ylabel('y');
 title("Front d'onde 1ms après micro réf.");
