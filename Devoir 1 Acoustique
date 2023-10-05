@@ -3,33 +3,33 @@ Vx = 392.1
 Vy = 680.3
 c = 785.2
 t=0.001; % 1 milliseconde en s
-f=100; % la fréquence en Hz
+f=100; % Fréquence
 
-% Angle en degrés avec l'axe horizontal (x)
-anglex_deg = 30;
+% Angle en degrés par rapport à (x)
+x_deg = 30;
 
 % Conversion de l'angle en radians
-anglex_rad = deg2rad(anglex_deg);
+x_rad = deg2rad(x_deg);
 
-% Angle en degrés avec l'axe vertical (y)
-angley_deg = 90 - anglex_deg;
+% Angle en degrés par rapport à (y)
+y_deg = 90 - x_deg;
 
 % Conversion degré en radian
-angley_rad = deg2rad(angley_deg);
+y_rad = deg2rad(y_deg);
 
 % Coordonnées du point de passage
-x0 = Vx*t*sin(anglex_rad);
-y0 = Vy*t*cos(anglex_rad);
+x0 = Vx*t*sin(x_rad);
+y0 = Vy*t*cos(x_rad);
 
 %Tracé de la droite du front d'onde
 
 % Coefficients de pente
-m = -tan(angley_rad);
+m = -tan(y_rad);
 
 %Ordonnée à l origine
 ordonnee_origine=y0-m*x0
 
-% Création d'un vecteur x
+% Vecteur x
 x = linspace(0, 10, 100);
 
 % Calcul des coordonnées y correspondantes
@@ -38,16 +38,15 @@ y = ordonnee_origine + m*x;
 % Tracé de la droite
 plot(x, y, 'b', 'LineWidth', 2, 'DisplayName', "Front D'onde"); hold on;
 
-% Tracé du micro de ref
+% Tracé des micros
 plot(0, 0, 'go', 'MarkerSize', 8, 'MarkerFaceColor', 'black', 'DisplayName', "Micro référence");
 plot(1, 0, 'go', 'MarkerSize', 8, 'MarkerFaceColor', 'blue', 'DisplayName', "2ème micro");
 plot(0, 1, 'go', 'MarkerSize', 8, 'MarkerFaceColor', 'red', 'DisplayName', "3ème micro");
 
 
-% k
-% Calcul des coordonnées finales du vecteur k (dépend de f)
-x_k = 2*pi*f/c*cos(anglex_rad);
-y_k = 2*pi*f/c*sin(anglex_rad);
+% Vecteur k
+x_k = 2*pi*f/c*cos(x_rad);
+y_k = 2*pi*f/c*sin(x_rad);
 
 % k
 hold on;
@@ -64,15 +63,15 @@ y02 = y0+0.03;
 normen = sqrt(nx^2+ny^2);
 
 % Calcul des coordonnées finales du vecteur
-x_n = normen*cos(anglex_rad);
-y_n = normen*sin(anglex_rad);
+x_n = normen*cos(x_rad);
+y_n = normen*sin(x_rad);
 
 % Tracé du vecteur
 hold on;
 quiver(x02, y02, x_n, y_n, 'Color', 'green', 'LineWidth', 2,'DisplayName', 'n');
 
 
-%Graphique
+%Graph
 legend()
 axis equal;
 axis([0, 2, 0, 2]);
