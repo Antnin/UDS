@@ -1,4 +1,4 @@
-%% Question 1
+%% Question 2 
 %% Déclaration variables
 
 Nb = 2 ;
@@ -19,85 +19,106 @@ Cd0 = 0.008 ;
 rho = 1.225; 
 rhoa = 1.225;
 K = 4.65;
- 
+
+M1 = 1361 ;
+M2 = 1542 ; 
+M3 = 1669 ; 
 
 Sigma = (Nb*c)/(pi*R);
-T = Mtow*g;
+T = M1*g;
+T2 = M2*g;
+T3 = M3*g ;
+%Calcul de Ct :
+Ct = T/(rho*A*omega^2*R^2);
+Ct2 = T2/(rho*A*omega^2*R^2);
+Ct3 = T3/(rho*A*omega^2*R^2);
+
 A = pi*R^2;
 omega = O*pi/30;
-Ct = T/(rho*A*omega^2*R^2);
-performancehelico(rhoa, A, omega, R, f, Sigma, rho, Kp, Cd0, T, Ct, K)
 
-function [Puissance_moteur, Puissance_disponible, Puissance_parasite_fuselage, Puissance_induite, Puissance_parasite_p, kts, Puissance_dispo_alt, P_tot_requise, P_exec] = performancehelico(rhoa,A, omega,R,f,Sigma,rho,Kp,Cd0, T,Ct, K)
+performancehelico(rhoa, A, omega, R, f, Sigma, rho, Kp, Cd0, T, T2, T3, Ct, Ct2, Ct3, K)
+
+function [Puissance_moteur, Puissance_disponible, Puissance_parasite_fuselage, Puissance_induite, Puissance_parasite_p, kts, Puissance_dispo_alt, P_tot_requise, P_exec] = performancehelico(rhoa,A, omega,R,f,Sigma,rho,Kp,Cd0, T, T2, T3, Ct, Ct2, Ct3, K)
     % Initialisation des listes
+    P_tot_requise = [];
+    P_tot_requise_m2 = [];
+    P_tot_requise_m3 = [];
     Puissance_moteur = [];
+    Puissance_moteur2 = [];
+    Puissance_moteur3 = [];
     Puissance_disponible = [];
     Puissance_parasite_fuselage = [];
     Puissance_induite = [];
     Puissance_parasite_p = [];
     kts = [];
     P_pertes = [];
-    P_tot_requise = [];
-
     % Variation de la vitesse
 
     for vitesse = 1:140
-        kts = [kts, vitesse];
+        kts = [kts, vitesse]; 
         lambda = 0.1;
+        lambda2 = 0.1;
+        lambda3 = 0.1;
         l = 1*10^-5;
         D = 1/2*rho*(vitesse*0.514444)^2*f ;
-        W = T ; % approximation des petits angles theta << 1
+        W = T ;
+        W2 = T2;
+        W3 = T3;
+        % approximation des petits angles theta << 1
         alpha = atan(D/W);
+        alpha2 = atan(D/W2);
+        alpha3 = atan(D/W3);
         mu = ((vitesse*0.514444)*cos(alpha)/(omega*R));
+        mu2 = ((vitesse*0.514444)*cos(alpha2)/(omega*R));
+        mu3 = ((vitesse*0.514444)*cos(alpha3)/(omega*R));
         while (lambda - l) > 1*10^-5
             lambda = mu*tan(alpha) + Ct/(2*sqrt(mu^2 + l^2));
             l = l + 1*10^-5;
+                end
+        while (lambda2 - l) > 1*10^-5
+            lambda2 = mu2*tan(alpha2) + Ct2/(2*sqrt(mu2^2 + l^2));
+            l = l + 1*10^-5;
+        end
+        while (lambda3 - l) > 1*10^-5
+            lambda3 = mu3*tan(alpha3) + Ct3/(2*sqrt(mu3^2 + l^2));
+            l = l + 1*10^-5;
         end
 
-        % Puissance disponible
+
+        % Puissance disponible du moteur en fonction des différentes masses
 
         Cp_MR = Kp*((Ct^2)/(2*sqrt(mu^2 + lambda^2))) + Sigma*Cd0/8 * (1+K*mu^2) + 1/2 * (f/A)*mu^3;
         Puissance_moteur = [Puissance_moteur, Cp_MR*rhoa*A*(omega^3)*(R^3)/745.7];
+    
+        Cp_MR2 = Kp*((Ct2^2)/(2*sqrt(mu2^2 + lambda2^2))) + Sigma*Cd0/8 * (1+K*mu2^2) + 1/2 * (f/A)*mu2^3;
+        Puissance_moteur2 = [Puissance_moteur2, Cp_MR2*rhoa*A*(omega^3)*(R^3)/745.7];
 
-        % Puissance parasite du fuselage
-
-        Cp_f = 1/2 * (f/A)*mu^3;
-        Puissance_parasite_fuselage = [Puissance_parasite_fuselage, Cp_f*rhoa*A*(omega^3)*(R^3)/745.7];
-       
-        % Puissance induite du fuselage
-
-        Cp_i = Kp*((Ct^2)/(2*sqrt(mu^2 + lambda^2)));
-        Puissance_induite = [Puissance_induite, Cp_i*rhoa*A*(omega^3)*(R^3)/745.7];
-       
-        % Puissance parasite de pale
-
-        Cp_p = Sigma*Cd0/8 * (1+K*mu^2);
-        Puissance_parasite_p = [Puissance_parasite_p, Cp_p*rhoa*A*(omega^3)*(R^3)/745.7];
+        Cp_MR3 = Kp*((Ct3^2)/(2*sqrt(mu3^2 + lambda3^2))) + Sigma*Cd0/8 * (1+K*mu3^2) + 1/2 * (f/A)*mu3^3;
+        Puissance_moteur3 = [Puissance_moteur3, Cp_MR3*rhoa*A*(omega^3)*(R^3)/745.7];
 
         % Pertes associées au rotor de queue
         % Puissance du rotor de queue PTR = 0.15 PMR
         % Puissance totale 
 
-        P_tot_requise = [P_tot_requise, (Cp_MR*rhoa*A*(omega^3)*(R^3)/745.7)*100/85];
-       
-        % Puissance maximale disponible en continue
+        P_tot_requise = [P_tot_requise, (Cp_MR*rhoa*A*(omega^3)*(R^3)/745.7)*1.15]; %On effectue ici 1 + 0.15
+        P_tot_requise_m2 = [P_tot_requise_m2, (Cp_MR2*rhoa*A*(omega^3)*(R^3)/745.7)*1.15];
+        P_tot_requise_m3 = [P_tot_requise_m3, (Cp_MR3*rhoa*A*(omega^3)*(R^3)/745.7)*1.15];
 
         Puissance_disponible = [Puissance_disponible, 428 * 1]; 
+        
     end
 
     % Plot des courbes
 
-    plot(kts, Puissance_moteur, 'LineWidth', 2, 'DisplayName', 'Puissance disponible au moteur');
+    plot(kts, P_tot_requise, 'LineWidth', 2, 'DisplayName', 'Puissance totale requise masse 1');
     hold on;
-    plot(kts, Puissance_parasite_fuselage, 'LineWidth', 2,'DisplayName', 'Contribution trainée de fuselage');
-    plot(kts, Puissance_induite, 'LineWidth', 2,'DisplayName', 'Contribution Puissance Induite');
-    plot(kts, Puissance_parasite_p, 'LineWidth', 2, 'DisplayName', 'Contribution de la traînée parasite des pales');
+    plot(kts, P_tot_requise_m2, 'LineWidth', 2, 'DisplayName', 'Puissance totale requise masse 2');
+    plot(kts, P_tot_requise_m3, 'LineWidth', 2, 'DisplayName', 'Puissance totale requise masse 3');
     plot(kts, Puissance_disponible, 'LineWidth', 2, 'DisplayName', 'Puissance maximale disponible en continue');
-    plot(kts, P_tot_requise, 'LineWidth', 2, 'DisplayName', 'Puissance totale requise');
-   
+    
     % Graphique
 
-    title('Puissances et contribution en fonction de la vitesse au sol à MTOW');
+    title('Puissances au niveau de la mer à des masses différentes');
     legend('Location', 'northwest','FontSize', 10);
     xlabel('Vitesse (kts)');
     ylabel('Puissance (hp)');
