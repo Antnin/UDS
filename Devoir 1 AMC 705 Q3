@@ -1,0 +1,120 @@
+%% Question 3
+%% Déclaration variables
+
+Nb = 2 ;
+c = 0.33 ;
+R = 5.64 ;
+O = 383 ;
+Pmcp = 319*10^3 ;
+Ew = 989 ;
+Mtow = 1669 ; 
+
+Kp = 1.15 ;
+f = 1.1 ;
+Kpp = 1.05 ; 
+ff = 1.3
+
+g = 9.81 ; 
+Cd0 = 0.008 ; 
+rho = 1.225; 
+rhoa = 1.225;
+rho2 = 0.96;
+rho3 = 0.769;
+K = 4.65;
+
+Sigma = (Nb*c)/(pi*R);
+T = Mtow*g;
+A = pi*R^2;
+omega = O*pi/30;
+Ct = T/(rho*A*omega^2*R^2);
+Ct2 = T/(rho2*A*omega^2*R^2);
+Ct3 = T/(rho3*A*omega^2*R^2);
+
+performancehelico(A, omega, R, f, Sigma, rho, rho2, rho3, Kp, Cd0, T, Ct, Ct2, Ct3, K)
+
+function [kts, P_tot_requise, P_tot_requise2, P_tot_requise3, Puissance_disponible, Puissance_disponible2, Puissance_disponible3] = performancehelico(A, omega,R,f,Sigma,rho, rho2, rho3, Kp,Cd0, T,Ct, Ct2, Ct3, K)
+    % Initialisation des listes
+    P_tot_requise = [];
+    P_tot_requise2 = [];
+    P_tot_requise3 = [];
+    Puissance_disponible = [];
+    Puissance_disponible2 = [];
+    Puissance_disponible3 = [];
+    kts = [];
+
+    % BVariation de la vitesse
+
+    for vitesse = 1:140
+        kts = [kts, vitesse];
+        lambda = 0.1;
+        lambda2 = 0.1;
+        lambda3 = 0.1;
+        l = 1*10^-5;
+        D = 1/2*rho*(vitesse*0.514444)^2*f ;
+        D2 = 1/2*rho2*(vitesse*0.514444)^2*f;
+        D3 = 1/2*rho3*(vitesse*0.514444)^2*f;
+        W = T ; % Approximation des petits angles theta << 1
+        alpha = atan(D/W);
+        alpha2 = atan(D2/W);
+        alpha3 = atan(D3/W);
+        mu = ((vitesse*0.514444)*cos(alpha)/(omega*R));
+        mu2 = ((vitesse*0.514444)*cos(alpha2)/(omega*R));
+        mu3 = ((vitesse*0.514444)*cos(alpha3)/(omega*R));
+        while (lambda - l) > 1*10^-5
+            lambda = mu*tan(alpha) + Ct/(2*sqrt(mu^2 + l^2));
+            l = l + 1*10^-5;
+        end
+        while (lambda2 - l) > 1*10^-5
+            lambda2 = mu2*tan(alpha2) + Ct2/(2*sqrt(mu2^2 + l^2));
+            l = l + 1*10^-5;
+        end
+        while (lambda3 - l) > 1*10^-5
+            lambda3 = mu3*tan(alpha3) + Ct3/(2*sqrt(mu3^2 + l^2));
+            l = l + 1*10^-5;
+        end
+
+        % Puissance disponible du moteur
+
+        Cp_MR = Kp*((Ct^2)/(2*sqrt(mu^2 + lambda^2))) + Sigma*Cd0/8 * (1+K*mu^2) + 1/2 * (f/A)*mu^3;
+        Cp_MR2 = Kp*((Ct2^2)/(2*sqrt(mu2^2 + lambda2^2))) + Sigma*Cd0/8 * (1+K*mu2^2) + 1/2 * (f/A)*mu2^3;
+        Cp_MR3 = Kp*((Ct3^2)/(2*sqrt(mu3^2 + lambda3^2))) + Sigma*Cd0/8 * (1+K*mu3^2) + 1/2 * (f/A)*mu3^3;
+
+
+        % Pertes associées au rotor de queue
+        % Puissance du rotor de queue PTR = 0.15 PMR
+        % Puissance totale = PMR + PTR
+
+        P_tot_requise = [P_tot_requise, (Cp_MR*rho*A*(omega^3)*(R^3)/745.7)*1.15];
+        P_tot_requise2 = [P_tot_requise2, (Cp_MR2*rho2*A*(omega^3)*(R^3)/745.7)*1.15];
+        P_tot_requise3 = [P_tot_requise3, (Cp_MR3*rho3*A*(omega^3)*(R^3)/745.7)*1.15];
+       
+        % Puissance maximale disponible en continue
+
+        Puissance_disponible = [Puissance_disponible, 428 * 1]; 
+        Puissance_disponible2 = [Puissance_disponible2, 428 *(rho2/rho)]; % Formule donnée dans le formulaire du devoir
+        Puissance_disponible3 = [Puissance_disponible3, 428 * (rho3/rho)]; 
+    end
+
+    % Plot des courbes
+
+    plot(kts, Puissance_disponible, 'LineWidth', 2, 'DisplayName', 'Puissance maximale disponible en continue au sol');
+    hold on;
+    plot(kts, Puissance_disponible2, 'LineWidth', 2, 'DisplayName', 'Puissance maximale disponible en continue à 8000ft');
+    plot(kts, Puissance_disponible3, 'LineWidth', 2, 'DisplayName', 'Puissance maximale disponible en continue à 15000ft');
+    plot(kts, P_tot_requise, 'LineWidth', 2, 'DisplayName', 'Puissance totale requise au sol');
+    plot(kts, P_tot_requise2, 'LineWidth', 2, 'DisplayName', 'Puissance totale requise à 8000ft');
+    plot(kts, P_tot_requise3, 'LineWidth', 2, 'DisplayName', 'Puissance totale requise à 15000ft');
+   
+    % Graphique
+
+    title("Puissances et contribution en fonction de la vitesse au sol à MTOW en fonction de l'altitude");
+    legend('Location', 'northwest','FontSize', 10);
+    xlabel('Vitesse (kts)');
+    ylabel('Puissance (hp)');
+
+    % Affichage
+
+    hold off;
+    grid on;
+   
+end
