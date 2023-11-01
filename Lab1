@@ -1,0 +1,60 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Oct 30 15:28:24 2023
+
+@author: jania
+"""
+import numpy as np
+
+#donées valide
+
+rho = 1.213
+c = 343
+tau = 80000
+d = 0.050 #mm
+d1 = 0.100 #mm
+d2 = 0.150 #mm
+
+freq_tiers_octave = [25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315,
+                     400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150,
+                     4000, 5000, 6300, 8000]
+Z_tild = []
+Z_s = []
+Z_s1 = []
+Z_s2 = []
+
+K_tild = []
+R_tild = []
+R_tild1 = []
+R_tild2 = []
+for i in range(len(freq_tiers_octave)):
+    z_tild = rho*c*(1+0.07*((freq_tiers_octave[i]/tau)**(-0.632))-1j*0.107*((freq_tiers_octave[i]/tau)**(-0.632)))
+    Z_tild.append(z_tild)
+    k_tild = ((2*np.pi*freq_tiers_octave[i])/c)*(1+0.109*((freq_tiers_octave[i]/tau)**(-0.618)) - 1j*0.16*((freq_tiers_octave[i]/tau)**(-0.618)))
+    K_tild.append(k_tild)
+    z_s = Z_tild[i]*(1/np.tanh(1j*K_tild[i]*d))
+    Z_s.append(z_s)
+    r_tild = ((Z_s[i]/(rho*c))-1)/((Z_s[i]/(rho*c))+1)
+    R_tild.append(r_tild)
+    z_s1 = Z_tild[i]*(1/np.tanh(1j*K_tild[i]*d1))
+    Z_s1.append(z_s1)
+    r_tild1 = ((Z_s1[i]/(rho*c))-1)/((Z_s1[i]/(rho*c))+1)
+    R_tild1.append(r_tild1)
+    z_s2 = Z_tild[i]*(1/np.tanh(1j*K_tild[i]*d2))
+    Z_s2.append(z_s2)
+    r_tild2 = ((Z_s2[i]/(rho*c))-1)/((Z_s2[i]/(rho*c))+1)
+    R_tild2.append(r_tild2)
+#print(R_tild)
+
+Alpha = []
+Alpha1 = []
+Alpha2 = []
+for i in range(len(freq_tiers_octave)):
+    alpha = 1-abs(R_tild[i])**2
+    Alpha.append(alpha)
+    alpha1 = 1-abs(R_tild1[i])**2
+    Alpha1.append(alpha1)
+    alpha2 = 1-abs(R_tild2[i])**2
+    Alpha2.append(alpha2)
+    
+print(Alpha2)
