@@ -1,0 +1,123 @@
+clc; close all; clear;
+Nb = 2 ; c = 0.33 ; R = 5.64 ; omega = 383*pi/30 ;
+MTOW = 1669 ;
+r0 = 0 ;
+K = 1.15 ; f = 1.1 ;
+g = 9.81 ; Cd0 = 0.01 ; rho = 1.225;
+cla = 2*pi;
+Sigma = (Nb*c)/(pi*R);
+W = MTOW*g;
+Vinf = 0;
+A = pi*R^2;
+Ct = W/(rho*A*omega^2*R^2);
+N = 20; % nombre de points pour diviser notre pale
+
+% Calcul des paramètres nécessaires pour le code :
+dy = (R-r0)/N;
+y = linspace(0.0001, R-0.0001, N);
+r = y./R;
+dr = dy./R;
+theta_tw = 0;
+F = ones(1,N);
+% Question 1
+theta_75 = (6*Ct)/(Sigma*cla)+(3/2)*(sqrt(Ct/2));  % valeur initiale avec formule analytique
+% Itérations pour différentes valeurs de tetaTw
+tetaTw_values = deg2rad([0 -5 -10 -15 -20]);
+
+for i = 1:numel(tetaTw_values)
+    tetaTw = tetaTw_values(i);
+    tetao = 0.1;
+    teta = tetao + tetaTw.*(r-0.75);
+    Thrust = 0;
+        while abs(Thrust - W) > 1
+            err = 10000;
+            while err > 0.001
+                F_old = F;
+                lambda = (Sigma*cla)./(16*F_old).*(sqrt(1+(32*F_old)./(Sigma*cla).*teta.*r)-1);
+                phi = lambda./r;
+                f = Nb/2 * ((1-r)./(r.*phi));
+                F = 2/pi * acos(exp(-f));
+                err = abs(sum(F)-sum(F_old));
+            end
+       
+            lambda = (Sigma*cla)./(16*F).*(sqrt(1+(32*F)./(Sigma*cla).*teta.*r)-1);
+       
+            phi = lambda./r;
+            vi = lambda.*omega.*y;
+            Ut = omega*y;
+            Up = Vinf + vi;
+            U = sqrt(Ut.^2+Up.^2);
+            cl = cla*(teta-phi);
+       
+            dL = 1/2 * rho*U.^2.*cl*c*dy;
+            dD = 1/2 * rho*U.^2*Cd0*c*dy;
+            dT = dL.*cos(phi) - dD.*sin(phi);
+            dQ = (dL.*sin(phi) + dD.*cos(phi))*omega;
+            dP = dQ.*y ;
+       
+            Thrust = sum(dT)*Nb;
+            Q = sum(dQ)*Nb;
+            P = sum(dP)*Nb;
+            teta = teta + 0.00001;
+        end
+       
+    dT_matrix(:, i) = dT;
+    lambda_matrix(:, i) = lambda;
+    dL_matrix(:, i) = dL;
+    Cl_matrix(:, i) = cl;
+   
+    disp(['Twist angle: ', num2str(tetaTw), ', teta: ', num2str(rad2deg(teta))]);
+    disp(['Twist angle: ', num2str(tetaTw), ', teta0: ', num2str(rad2deg(tetao))]);
+   
+    Ctswag = 0.5 * Sigma * cla*((teta/3) - lambda/2);
+    Ct=sum(Ctswag)/20;
+   
+    Cpi= (Ct^(3/2))/sqrt(2);
+    Cp0=(Sigma*Cd0)/8;
+    FM = Cpi/(K*Cpi + Cp0);
+    FM_matrix(:,i) = FM;
+end
+figure(1)
+hold on;
+
+for i = 1:numel(tetaTw_values)
+    plot(r, lambda_matrix(:, i), 'DisplayName', ['Twist angle: ', num2str(rad2deg(tetaTw_values(i)))], LineWidth=1.3);
+end
+
+xlabel('Position radiale r');
+ylabel('Vitesse induite lambda');
+legend('Location', 'best');
+title('Vitesse induite en fonction de la position radiale')
+grid on;
+figure(2)
+hold on;
+
+for i = 1:numel(tetaTw_values)
+    plot(r, dL_matrix(:, i), 'DisplayName', ['Twist angle: ', num2str(rad2deg(tetaTw_values(i)))], LineWidth=1.3);
+end
+
+xlabel('Position radiale (r)');
+ylabel('Distribution de portance (dL)');
+legend('Location', 'best');
+title('Distribution de portance en fonction de la position radiale')
+grid on;
+figure(3)
+hold on;
+
+for i = 1:numel(tetaTw_values)
+    plot(r, Cl_matrix(:, i), 'DisplayName', ['Twist angle: ', num2str(rad2deg(tetaTw_values(i)))],LineWidth=1.3);
+end
+
+xlabel('Position radiale (r)');
+ylabel('Distribution du coefficient de portance (Cl)');
+legend('Location', 'best');
+title('Distribution du coefficient de portance en fonction de la position radiale')
+grid on;
+figure(4)
+
+hold on;
+plot(rad2deg(tetaTw_values), FM_matrix, LineWidth=1.5, Color='b');
+xlabel('Twist linéaire Teta_{tw} (en degrés)');
+ylabel('FM');
+title('FM en fonction du twist angle')
+grid on;
