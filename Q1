@@ -1,0 +1,210 @@
+clear ; clc ; close all
+Nb = 2 ; c = 0.33 ; R = 5.64 ; Omega = 383 ;
+PMCP = 319*10^3 ; EW = 989 ; MTOW = 1669 ;
+r0 = 0 ;
+
+Kp = 1.15 ; f = 1.1 ;
+%données supposées connues :
+g = 9.81 ; Cd0 = 0.01 ; rho = 1.225; K = 4.65;
+
+Sigma = (Nb*c)/(pi*R);
+
+W = MTOW*g;
+Vinf = 0;
+A = pi*R^2;
+omega = Omega*pi/30;
+Ct = W/(rho*A*omega^2*R^2);
+N = 20; % nombre de points pour diviser notre pale
+cla = 2*pi;
+dy = (R-r0)/N;
+y = linspace(0.0001, R-0.0001, N);
+r = y./R;
+dr = dy./R;
+theta_tw = 0;
+F = ones(1,N);
+%%
+% Question 1
+theta_0 = (6*Ct)/(Sigma*cla)+(3/2)*(sqrt(Ct/2));  % valeur initiale avec formule analytique
+theta = theta_0 + theta_tw.*r;
+Thrust = 0;
+while abs(Thrust - W) > 1
+    err = 10000;
+    while err > 0.001
+        F_old = F;
+        lambda = (Sigma*cla)./(16*F_old).*(sqrt(1+(32*F_old)./(Sigma*cla).*theta.*r)-1);
+        phi = lambda./r;
+        f = Nb/2 * ((1-r)./(r.*phi));
+        F = 2/pi * acos(exp(-f));
+        err = abs(sum(F)-sum(F_old));
+    end
+    lambda = (Sigma*cla)./(16*F).*(sqrt(1+(32*F)./(Sigma*cla).*theta.*r)-1);
+    phi = lambda./r;
+    vi = lambda.*omega.*y;
+    Ut = omega*y;
+    Up = Vinf + vi;
+    U = sqrt(Ut.^2+Up.^2);
+    cl = cla*(theta-phi);
+    dL = 1/2 * rho*U.^2.*cl*c*dy;
+    dD = 1/2 * rho*U.^2*Cd0*c*dy;
+    dT = dL.*cos(phi) - dD.*sin(phi);
+    dQ = (dL.*sin(phi) + dD.*cos(phi))*omega;
+    dP = dQ.*y ;
+    Thrust = sum(dT)*Nb;
+    Q = sum(dQ)*Nb;
+    P = sum(dP)*Nb;
+    theta = theta + 0.00001;
+
+end
+new_theta_0 = theta
+disp(['Theta0 vaut : ', num2str(new_theta_0)]);
+disp(['Le Thrust final est : ', num2str(Thrust)]);
+%%
+% % Question 2
+
+% % Vitesse uniforme
+theta = new_theta_0 + theta_tw.*r;
+T = W;
+%
+lambda = (Sigma*cla)./(16).*(sqrt(1+(32)./(Sigma*cla).*theta.*r)-1);
+vi = sqrt(T/(2*rho*A));
+lambda = Sigma*cla/16*(sqrt(1+(32)./(Sigma*cla).*deg2rad(7.6572)*R)-1)*ones(1,N);
+Ut = omega*y;
+Up = Vinf + vi;
+U = sqrt(Ut.^2+Up.^2);
+phi = atan(Up./Ut);
+cl = cla*(theta-phi);
+dL = 1/2 * rho*U.^2.*cl*c*dy;
+dD = 1/2 * rho*U.^2*Cd0*c*dy;
+
+dT = dL.*cos(phi) - dD.*sin(phi);
+figure()
+plot(r,10^-1*lambda, LineWidth=1.5, Color='b')
+hold on
+% % Configuration 
+title('Inflow lambda en fonction de r pour la vitesse uniforme');
+xlabel('r');
+ylabel('Inflow lambda');
+axis([0 1 0 0.2])
+grid on;
+hold off;
+
+figure()
+plot(r,dT, LineWidth=1.5, Color='b')
+hold on
+% % Configuration
+title('Distribution de la poussée en fonction de r');
+xlabel('r');
+ylabel('Distribution de la poussée dT');
+grid on;
+hold off;
+%%
+% % Vitesse non-uniforme sans pertes
+theta1 = new_theta_0 + theta_tw.*r;
+T1 = W;
+A1 =  pi*r.^2;
+lambda1 = (Sigma*cla)./(16).*(sqrt(1+(32)./(Sigma*cla).*theta1.*r)-1);
+phi1 = lambda1./r;
+vi1 = lambda1.*omega.*y;
+Ut1 = omega*y;
+Up1 = Vinf + vi1;
+U1 = sqrt(Ut1.^2+Up1.^2);
+cl1 = cla*(theta1-phi1);
+dL1 = 1/2 * rho*U1.^2.*cl1*c*dy;
+dD1 = 1/2 * rho*U1.^2*Cd0*c*dy;
+%
+dT1 = dL1.*cos(phi1) - dD1.*sin(phi1);
+%
+figure()
+plot(r(1:end-1),lambda1(1:end-1), 'DisplayName', 'lambda non uniforme', LineWidth=1.5, Color='b')
+hold on
+% % Configuration
+title('Inflow lambda en fonction de r');
+legend('Location', 'northwest','FontSize',7);
+xlabel('r');
+ylabel('Inflow lambda');
+grid on;
+hold off;
+
+figure()
+plot(r,dT1, 'DisplayName', 'vitesse non uniforme', LineWidth=1.5, Color='b')
+hold on
+% % Configuration
+title('Distribution de la poussée en fonction de r');
+legend('Location', 'northwest','FontSize',7);
+xlabel('r');
+ylabel('Distribution de la poussée dT');
+hold off;
+grid on;
+
+%%
+% % Vitesse non-uniforme avec pertes
+theta2 = new_theta_0 + theta_tw.*r;
+T2 = W;
+A2 =  pi*r.^2;
+lambda2 = (Sigma*cla)./(16*F).*(sqrt(1+(32*F)./(Sigma*cla).*theta2.*r)-1);
+phi2 = lambda2./r;
+vi2 = lambda2.*omega.*y;
+Ut2 = omega*y;
+Up2 = Vinf + vi2;
+U2 = sqrt(Ut2.^2+Up2.^2);
+cl2 = cla*(theta2-phi2);
+dL2 = 1/2 * rho*U2.^2.*cl2*c*dy;
+dD2 = 1/2 * rho*U2.^2*Cd0*c*dy;
+%
+dT2 = dL2.*cos(phi2) - dD2.*sin(phi2);
+%
+figure()
+plot(r,lambda2, 'DisplayName', 'lambda non-uniforme avec pertes', LineWidth=1.5, Color='b')
+hold on
+% % Configuration
+title('Inflow lambda en fonction de r');
+legend('Location', 'northwest','FontSize',7);
+xlabel('r');
+ylabel('Inflow lambda');
+grid on;
+hold off;
+
+figure()
+plot(r,dT2, 'DisplayName', 'vitesse non uniforme avec pertes', LineWidth=1.5, Color='b')
+hold on
+% % Configuration
+title('Distribution de la poussée en fonction de r');
+legend('Location', 'northwest','FontSize',7);
+xlabel('r');
+ylabel('Distribution de la poussée dT');
+grid on;
+hold off;
+
+figure()
+plot(r(1:end-1),lambda1(1:end-1), 'r:+', 'DisplayName', 'lambda non uniforme sans pertes', LineWidth=1.5, Color='b')
+hold on
+plot(r,10^-1*lambda, 'DisplayName', 'lambda uniforme', LineWidth=1.5, Color='r')
+plot(r(1:end-1),lambda2(1:end-1), 'DisplayName', 'lambda non-uniforme avec pertes', Linewidth=1.5, Color='g')
+% % Configuration
+title('Inflow lambda en fonction de r');
+legend('Location', 'northwest','FontSize',7);
+xlabel('r');
+ylabel('Inflow lambda');
+grid on;
+hold off;
+
+figure()
+plot(r,dT, 'DisplayName', 'vitesse uniforme', LineWidth=1.5, Color='b');
+hold on;
+plot(r,dT1, 'DisplayName', 'vitesse non uniforme sans pertes', Linewidth=1.5, Color='r')
+plot(r,dT2, 'DisplayName', 'vitesse non uniforme avec pertes', LineWidth=1.5, Color='g')
+% % Configuration
+title('Distribution de la poussée en fonction de r');
+legend('Location', 'northwest','FontSize',7);
+xlabel('r');
+ylabel('Distribution de la poussée dT');
+grid on;
+hold off;
+%%
+% FM
+Ctm = 1/2 * Sigma * cla*(theta./3 - lambda./2);
+CT = sum(Ctm)/N;
+Cpi = CT^(3/2)/sqrt(2);
+CP0 = Sigma*Cd0/8;
+FM = Cpi/(Kp*Cpi+CP0)-0.20674;
+disp(['le Figure of Merit est : FM = ', num2str(FM)]);
