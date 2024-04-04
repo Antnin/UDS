@@ -1,0 +1,118 @@
+%-------------------------------------------------------------------------%
+% Samuel Quenneville                                                      %
+% 2024-03-27                                                              %
+%                                                                         %
+% SUMMARY: Solve the longitudinal aircraft dynamic                        %
+% ‾‾‾‾‾‾‾‾                                                                %
+%-------------------------------------------------------------------------%
+
+clc; clear all; close all;
+
+%% Trim
+
+% Speed (ft/s)
+V = 260*(5280/3600);
+
+% Trim
+eq = @(vars)trim(vars,V);
+disp(eq)
+vars_0 = [0 0 0];
+
+trimmed_settings = fsolve(eq,vars_0);
+
+alpha  = trimmed_settings(1);
+deltae = trimmed_settings(2);
+T      = trimmed_settings(3);
+
+%% Simulation case / defined elevator deflection function of time
+
+time = linspace(0,500,5000);
+
+% Elevator deflection
+de = zeros(1,length(time));
+
+simulation = 1;
+
+switch simulation
+    case 0
+        for i =1:length(time)
+            de(i)=trimmed_settings(2);
+        end
+    case 1
+        for i = 1:length(time)
+            t = time(i);
+            if t<20
+                de(i) = deltae;
+            elseif t>40 && t<45
+                de(i)=deg2rad(5);
+            else
+                de(i)= deltae;
+            end
+        end
+    case 2
+        for i = 1:length(time)
+            t= time(i);
+            if t <20
+                de(i) = deltae;
+            else
+                de(i) = deg2rad(2);
+            end
+        end
+end
+          
+
+
+%% Dynamic
+
+Dyn = @(t,states)dyn(states,t,de,time,T);
+states_0 = [V alpha alpha 0];
+
+[t,x] = ode45(Dyn,time,states_0);
+
+%% Aircraft states
+V     = x(:,1);
+alpha = x(:,2);
+theta = x(:,3);
+q     = x(:,4);
+
+V_taux = V.*sin(alpha-theta);
+%% Plot
+figure()
+
+
+plot(t,rad2deg(q),'r', 'LineWidth',1)
+grid on
+
+xlabel('Time (s)')
+ylabel('theta (t)')
+hold on
+plot(t,rad2deg(de),'b','LineWidth',1)
+title('Dynamique pour une periode de 500s')
+legend('theta','Déflexion du stabilisateur horizontal \delta_e')
+grid on;
+%{
+%% Vitesse en fonction du temps et angulaire
+plot(t, V, 'LineWidth', 1.3, 'Displayname', 'Vitesse (t)');
+xlabel('Time (s)');
+ylabel('Vitesse (ft/s)');
+title('Vitesse');
+legend('show'); % Affiche la légende
+grid on;
+
+hold on;
+
+plot(t, q, 'LineWidth', 1.3, 'Displayname', 'Vitesse angulaire');
+xlabel('Time (s)');
+ylabel('Vitesse (rad/s)');
+title('Vitesse');
+legend('show'); % Affiche la légende
+grid on;
+
+%% Vitesse de montee
+plot(t, V_taux, 'LineWidth', 1.3, 'Displayname', 'Vitesse (t)');
+xlabel('Time (s)');
+ylabel('Vitesse ft/s');
+title("Vitesse de montee de l'avion");
+legend('show'); % Affiche la légende
+grid on;
+%}
